@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Barn } from './Barn';
 import { Platform } from './Platform';
@@ -13,188 +13,170 @@ import { Coin as CoinType, Platform as PlatformType, ParticleData } from '../typ
 function Scene() {
   const [coins, setCoins] = useState<CoinType[]>([]);
   const [particles, setParticles] = useState<ParticleData[]>([]);
-  const [lastSpawnTime, setLastSpawnTime] = useState(0);
-  const [nextSpawnDelay, setNextSpawnDelay] = useState(8000);
   const [isFirstInteraction, setIsFirstInteraction] = useState(true);
-  const [platformRotations, setPlatformRotations] = useState<{ [key: string]: number }>({});
-  
+  const [platformRotations, setPlatformRotations] = useState<Record<string, number>>({});
+
   const { playBackground, playHit, playSuccess } = useAudioManager();
+  const coinCountRef = useRef(0); // Track coin count without re-renders
+  const platformsRef = useRef<PlatformType[]>([]); // Reference to current platforms
 
   // Create platforms in a zigzag pattern with dynamic rotations and side barriers
-  const platforms = useMemo<PlatformType[]>(() => [
-    // Main zigzag platforms
-    { id: '1', position: { x: -2, y: 6, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['1'] || -0.2 }, width: 3, height: 0.2, depth: 1 },
-    { id: '2', position: { x: 2, y: 4, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['2'] || 0.2 }, width: 3, height: 0.2, depth: 1 },
-    { id: '3', position: { x: -2, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['3'] || -0.2 }, width: 3, height: 0.2, depth: 1 },
-    { id: '4', position: { x: 2, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['4'] || 0.2 }, width: 3, height: 0.2, depth: 1 },
-    { id: '5', position: { x: -2, y: -2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['5'] || -0.2 }, width: 3, height: 0.2, depth: 1 },
-    { id: '6', position: { x: 2, y: -4, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['6'] || 0.2 }, width: 3, height: 0.2, depth: 1 },
-    // Side barriers
-    { id: 'left-wall', position: { x: -5, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['left-wall'] || 0 }, width: 0.5, height: 12, depth: 1 },
-    { id: 'right-wall', position: { x: 5, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['right-wall'] || 0 }, width: 0.5, height: 12, depth: 1 },
-  ], [platformRotations]);
+  const platforms = useMemo<PlatformType[]>(() => {
+    const plats = [
+      // Main zigzag platforms
+      { id: '1', position: { x: -2, y: 6, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['1'] ?? -0.2 }, width: 3, height: 0.2, depth: 1 },
+      { id: '2', position: { x: 2, y: 4, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['2'] ?? 0.2 }, width: 3, height: 0.2, depth: 1 },
+      { id: '3', position: { x: -2, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['3'] ?? -0.2 }, width: 3, height: 0.2, depth: 1 },
+      { id: '4', position: { x: 2, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['4'] ?? 0.2 }, width: 3, height: 0.2, depth: 1 },
+      { id: '5', position: { x: -2, y: -2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['5'] ?? -0.2 }, width: 3, height: 0.2, depth: 1 },
+      { id: '6', position: { x: 2, y: -4, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['6'] ?? 0.2 }, width: 3, height: 0.2, depth: 1 },
+      // Side barriers
+      { id: 'left-wall', position: { x: -5, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['left-wall'] ?? 0 }, width: 0.5, height: 12, depth: 1 },
+      { id: 'right-wall', position: { x: 5, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['right-wall'] ?? 0 }, width: 0.5, height: 12, depth: 1 },
+    ];
+    platformsRef.current = plats;
+    return plats;
+  }, [platformRotations]);
 
-  // Import usePhysics hook here inside Scene component
-  const { nudgeCoin } = usePhysics(coins, platforms, setCoins);
+  // Physics hook with optimized coin handling
+  const { nudgeCoin } = usePhysics(coins, platformsRef.current, setCoins);
 
-  // Continuous spawning system - spawn every 3 seconds with coin limit
+  // Coin spawning system
   useEffect(() => {
     const spawnCoin = () => {
-      // Limit to 30 coins maximum
       setCoins(prev => {
-        if (prev.length >= 30) {
-          console.log('Coin limit reached, skipping spawn');
-          return prev;
-        }
-        
-        const now = Date.now();
+        if (coinCountRef.current >= 30) return prev;
+
         const newCoin: CoinType = {
-          id: `coin-${now}`,
-          position: { x: 0, y: 9, z: 0 },
+          id: `coin-${Date.now()}`,
+          position: { x: (Math.random() - 0.5) * 3, y: 9, z: 0 },
           velocity: { x: (Math.random() - 0.5) * 0.5, y: 0, z: 0 },
           rotation: 0,
-          rotationSpeed: 0,
+          rotationSpeed: 0.05 + Math.random() * 0.05,
           scale: 1,
           opacity: 1,
           isActive: true,
           age: 0,
         };
-        
-        console.log('Spawning coin:', newCoin.id, 'Total coins:', prev.length + 1);
+
+        coinCountRef.current = prev.length + 1;
         playSuccess();
         return [...prev, newCoin];
       });
     };
 
-    // Spawn first coin immediately
-    spawnCoin();
-    
-    // Then spawn every 3 seconds
+    spawnCoin(); // Initial coin
     const interval = setInterval(spawnCoin, 3000);
-    
     return () => clearInterval(interval);
   }, [playSuccess]);
 
-  // Handle touch/click interactions
+  // Clean up inactive coins
+  useEffect(() => {
+    const cleanup = setInterval(() => {
+      setCoins(prev => {
+        const activeCoins = prev.filter(coin => coin.isActive);
+        coinCountRef.current = activeCoins.length;
+        return activeCoins;
+      });
+    }, 5000);
+
+    return () => clearInterval(cleanup);
+  }, []);
+
+  // Handle interactions
   const handlePointerDown = useCallback((event: THREE.Event) => {
     if (isFirstInteraction) {
       playBackground();
       setIsFirstInteraction(false);
     }
 
-    const intersectedObject = event.intersections[0];
-    if (intersectedObject) {
-      // Check if a platform was clicked with more generous bounds
-      const clickedPlatform = platforms.find(platform => {
-        const distanceX = Math.abs(platform.position.x - intersectedObject.point.x);
-        const distanceY = Math.abs(platform.position.y - intersectedObject.point.y);
-        const distanceZ = Math.abs(platform.position.z - intersectedObject.point.z);
-        const withinBounds = distanceX < platform.width / 2 + 0.5 && distanceY < platform.height / 2 + 1.0 && distanceZ < platform.depth / 2 + 0.5;
-        
-        console.log(`Platform ${platform.id} check:`, {
-          clickPoint: intersectedObject.point,
-          platformPos: platform.position,
-          distances: { x: distanceX, y: distanceY, z: distanceZ },
-          withinBounds
-        });
-        
-        return withinBounds;
-      });
+    const intersection = event.intersections[0];
+    if (!intersection) return;
 
-      if (clickedPlatform) {
-        // Tilt the platform (including side walls)
-        let currentRotation;
-        if (clickedPlatform.id.includes('wall')) {
-          currentRotation = platformRotations[clickedPlatform.id] || 0;
-        } else {
-          currentRotation = platformRotations[clickedPlatform.id] || (clickedPlatform.position.x < 0 ? -0.2 : 0.2);
-        }
-        const newRotation = currentRotation > 0 ? currentRotation - 0.3 : currentRotation + 0.3;
-        
-        setPlatformRotations(prev => ({
-          ...prev,
-          [clickedPlatform.id]: Math.max(-0.8, Math.min(0.8, newRotation))
-        }));
-        
-        console.log('Platform tilted:', clickedPlatform.id, 'New rotation:', newRotation);
+    // Check platform clicks
+    for (const platform of platformsRef.current) {
+      const dx = Math.abs(platform.position.x - intersection.point.x);
+      const dy = Math.abs(platform.position.y - intersection.point.y);
+
+      if (dx < platform.width / 2 + 0.3 && dy < platform.height / 2 + 0.3) {
+        const currentRotation = platformRotations[platform.id] ?? 
+          (platform.id.includes('wall') ? 0 : platform.position.x < 0 ? -0.2 : 0.2);
+
+        const newRotation = currentRotation > 0 ? 
+          Math.max(-0.8, currentRotation - 0.3) : 
+          Math.min(0.8, currentRotation + 0.3);
+
+        setPlatformRotations(prev => ({ ...prev, [platform.id]: newRotation }));
         playHit();
         return;
       }
-
-      // Find the coin that was clicked
-      const clickedCoin = coins.find(coin => 
-        coin.isActive && 
-        Math.abs(coin.position.x - intersectedObject.point.x) < 0.5 &&
-        Math.abs(coin.position.y - intersectedObject.point.y) < 0.5
-      );
-
-      if (clickedCoin) {
-        // Nudge the coin
-        nudgeCoin(clickedCoin.id, { x: (Math.random() - 0.5) * 2, y: 1, z: 0 });
-        
-        // Create sparkle particles
-        const newParticles: ParticleData[] = [];
-        for (let i = 0; i < 5; i++) {
-          newParticles.push({
-            id: `particle-${Date.now()}-${i}`,
-            position: { 
-              x: clickedCoin.position.x + (Math.random() - 0.5) * 0.5,
-              y: clickedCoin.position.y + (Math.random() - 0.5) * 0.5,
-              z: clickedCoin.position.z + (Math.random() - 0.5) * 0.5
-            },
-            velocity: {
-              x: (Math.random() - 0.5) * 2,
-              y: Math.random() * 3,
-              z: (Math.random() - 0.5) * 2
-            },
-            life: 1,
-            maxLife: 1,
-            size: 0.1,
-            color: '#ffd700'
-          });
-        }
-        
-        setParticles(prev => [...prev, ...newParticles]);
-        playHit();
-      }
     }
-  }, [coins, platforms, platformRotations, nudgeCoin, playHit, playBackground, isFirstInteraction]);
 
-  // Clean up inactive coins less frequently to avoid interfering with spawning
-  useEffect(() => {
-    const cleanup = setInterval(() => {
-      setCoins(prev => prev.filter(coin => coin.isActive));
-    }, 10000); // Clean up every 10 seconds instead of 5
+    // Check coin clicks
+    const clickedCoin = coins.find(coin => 
+      coin.isActive &&
+      Math.abs(coin.position.x - intersection.point.x) < 0.5 &&
+      Math.abs(coin.position.y - intersection.point.y) < 0.5
+    );
 
-    return () => clearInterval(cleanup);
-  }, []);
+    if (clickedCoin) {
+      nudgeCoin(clickedCoin.id, { 
+        x: (Math.random() - 0.5) * 3, 
+        y: 1.5 + Math.random() * 1, 
+        z: 0 
+      });
+
+      // Generate particles
+      setParticles(prev => [
+        ...prev,
+        ...Array.from({ length: 8 }, (_, i) => ({
+          id: `particle-${Date.now()}-${i}`,
+          position: { 
+            x: clickedCoin.position.x + (Math.random() - 0.5) * 0.3,
+            y: clickedCoin.position.y + (Math.random() - 0.5) * 0.3,
+            z: clickedCoin.position.z
+          },
+          velocity: {
+            x: (Math.random() - 0.5) * 2,
+            y: Math.random() * 3,
+            z: (Math.random() - 0.5) * 0.2
+          },
+          life: 1,
+          maxLife: 0.8 + Math.random() * 0.4,
+          size: 0.08 + Math.random() * 0.04,
+          color: '#ffd700'
+        }))
+      ]);
+
+      playHit();
+    }
+  }, [coins, nudgeCoin, playHit, playBackground, isFirstInteraction]);
 
   return (
     <>
-      {/* Lighting */}
       <ambientLight intensity={0.6} />
       <directionalLight position={[10, 10, 5]} intensity={0.8} />
-      
-      {/* Scene objects */}
+      <pointLight position={[0, 10, 2]} intensity={0.5} />
+
       <Barn />
-      
+
       {platforms.map(platform => (
         <Platform key={platform.id} platform={platform} />
       ))}
-      
+
       {coins.map(coin => (
         <Coin key={coin.id} coin={coin} />
       ))}
-      
+
       <ParticleEffect particles={particles} onParticleUpdate={setParticles} />
-      
-      {/* Invisible mesh for touch detection */}
+
+      {/* Interaction plane */}
       <mesh
-        position={[0, 0, 0]}
+        position={[0, 0, -1]}
         onPointerDown={handlePointerDown}
         visible={false}
       >
-        <boxGeometry args={[20, 20, 20]} />
+        <planeGeometry args={[20, 20]} />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
     </>
@@ -203,10 +185,15 @@ function Scene() {
 
 export function LavaLamp() {
   return (
-    <div style={{ width: '100vw', height: '100vh', touchAction: 'none' }}>
+    <div style={{ 
+      width: '100vw', 
+      height: '100vh', 
+      touchAction: 'none',
+      overflow: 'hidden'
+    }}>
       <Canvas
         camera={{ position: [0, 0, 15], fov: 60 }}
-        style={{ background: 'linear-gradient(to bottom, #87CEEB, #E0F6FF)' }}
+        style={{ background: 'linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d)' }}
       >
         <Scene />
       </Canvas>
