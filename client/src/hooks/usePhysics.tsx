@@ -16,16 +16,23 @@ export function usePhysics(coins: Coin[], platforms: Platform[], onCoinUpdate: (
     const platformHalfHeight = platform.height / 2;
     const platformHalfDepth = platform.depth / 2;
 
-    // Simple AABB collision detection
+    // Check if coin is above the platform (within X and Z bounds)
     const distanceX = Math.abs(coin.position.x - platform.position.x);
-    const distanceY = Math.abs(coin.position.y - platform.position.y);
     const distanceZ = Math.abs(coin.position.z - platform.position.z);
-
-    return (
+    
+    // Check if coin is within platform bounds horizontally
+    const withinPlatformBounds = (
       distanceX < (platformHalfWidth + coinRadius) &&
-      distanceY < (platformHalfHeight + coinRadius) &&
       distanceZ < (platformHalfDepth + coinRadius)
     );
+    
+    // Check if coin is at the right height to land on platform
+    const platformTop = platform.position.y + platformHalfHeight;
+    const coinBottom = coin.position.y - coinRadius;
+    const coinAbovePlatform = coin.position.y > platformTop;
+    const coinNearPlatform = Math.abs(coinBottom - platformTop) < 0.5;
+    
+    return withinPlatformBounds && coinNearPlatform && coin.velocity.y <= 0;
   }, []);
 
   const updateCoinPhysics = useCallback((coin: Coin, deltaTime: number): Coin => {
@@ -45,18 +52,21 @@ export function usePhysics(coins: Coin[], platforms: Platform[], onCoinUpdate: (
     // Check collisions with platforms
     platforms.forEach(platform => {
       if (checkCollision(coin, platform)) {
-        // Simple bounce response
-        if (coin.velocity.y < 0) {
-          coin.velocity.y = -coin.velocity.y * BOUNCE_DAMPING;
-          coin.position.y = platform.position.y + platform.height / 2 + 0.3;
-          
-          // Apply platform slope effect
-          const slopeAngle = platform.rotation.z;
-          coin.velocity.x += Math.sin(slopeAngle) * 2;
-          
-          // Update rotation speed based on velocity
-          coin.rotationSpeed = coin.velocity.x * 2;
-        }
+        console.log('Collision detected with platform:', platform.id);
+        
+        // Place coin on top of platform
+        const platformTop = platform.position.y + platform.height / 2;
+        coin.position.y = platformTop + 0.3;
+        
+        // Bounce response
+        coin.velocity.y = -coin.velocity.y * BOUNCE_DAMPING;
+        
+        // Apply platform slope effect for rolling
+        const slopeAngle = platform.rotation.z;
+        coin.velocity.x += Math.sin(slopeAngle) * 3;
+        
+        // Update rotation speed based on velocity (rolling effect)
+        coin.rotationSpeed = coin.velocity.x * 3;
       }
     });
 
