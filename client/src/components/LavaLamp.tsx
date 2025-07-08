@@ -57,8 +57,8 @@ function Scene() {
     // Spawn first coin immediately
     spawnCoin();
     
-    // Then spawn every 5 seconds
-    const interval = setInterval(spawnCoin, 5000);
+    // Then spawn every 8 seconds
+    const interval = setInterval(spawnCoin, 8000);
     
     return () => clearInterval(interval);
   }, [playSuccess]);
@@ -72,11 +72,21 @@ function Scene() {
 
     const intersectedObject = event.intersections[0];
     if (intersectedObject) {
-      // Check if a platform was clicked
+      // Check if a platform was clicked with more generous bounds
       const clickedPlatform = platforms.find(platform => {
         const distanceX = Math.abs(platform.position.x - intersectedObject.point.x);
         const distanceY = Math.abs(platform.position.y - intersectedObject.point.y);
-        return distanceX < platform.width / 2 && distanceY < platform.height / 2 + 0.5;
+        const distanceZ = Math.abs(platform.position.z - intersectedObject.point.z);
+        const withinBounds = distanceX < platform.width / 2 + 0.5 && distanceY < platform.height / 2 + 1.0 && distanceZ < platform.depth / 2 + 0.5;
+        
+        console.log(`Platform ${platform.id} check:`, {
+          clickPoint: intersectedObject.point,
+          platformPos: platform.position,
+          distances: { x: distanceX, y: distanceY, z: distanceZ },
+          withinBounds
+        });
+        
+        return withinBounds;
       });
 
       if (clickedPlatform) {
