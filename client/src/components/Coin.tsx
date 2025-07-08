@@ -15,7 +15,7 @@ export function Coin({ coin }: CoinProps) {
     <mesh
       ref={meshRef}
       position={[coin.position.x, coin.position.y, coin.position.z]}
-      rotation={[0, coin.rotation, 0]}
+      rotation={[0, coin.rotation, Math.PI / 2]}
       scale={[coin.scale, coin.scale, coin.scale]}
     >
       <cylinderGeometry args={[0.5, 0.5, 0.3, 32]} />
