@@ -32,8 +32,38 @@ function Scene() {
   // Import usePhysics hook here inside Scene component
   const { nudgeCoin } = usePhysics(coins, platforms, setCoins);
 
-  // Spawn coins periodically
+  // Spawn the first coin immediately on start
   useEffect(() => {
+    const spawnCoin = () => {
+      const now = Date.now();
+      const newCoin: CoinType = {
+        id: `coin-${now}`,
+        position: { x: 0, y: 9, z: 0 },
+        velocity: { x: (Math.random() - 0.5) * 0.5, y: 0, z: 0 },
+        rotation: 0,
+        rotationSpeed: 0,
+        scale: 1,
+        opacity: 1,
+        isActive: true,
+        age: 0,
+      };
+      
+      setCoins(prev => [...prev, newCoin]);
+      setLastSpawnTime(now);
+      console.log('Coin spawned:', newCoin.id);
+      playSuccess();
+    };
+
+    // Spawn first coin after 2 seconds
+    const firstSpawn = setTimeout(spawnCoin, 2000);
+    
+    return () => clearTimeout(firstSpawn);
+  }, [playSuccess]);
+
+  // Spawn coins periodically after the first one
+  useEffect(() => {
+    if (lastSpawnTime === 0) return; // Wait for first spawn
+    
     const interval = setInterval(() => {
       const now = Date.now();
       if (now - lastSpawnTime > nextSpawnDelay) {
@@ -52,6 +82,7 @@ function Scene() {
         setCoins(prev => [...prev, newCoin]);
         setLastSpawnTime(now);
         setNextSpawnDelay(8000 + Math.random() * 4000); // 8-12 seconds
+        console.log('Coin spawned:', newCoin.id);
         playSuccess();
       }
     }, 1000);
@@ -129,9 +160,10 @@ function Scene() {
         <Platform key={platform.id} platform={platform} />
       ))}
       
-      {coins.map(coin => (
-        <Coin key={coin.id} coin={coin} />
-      ))}
+      {coins.map(coin => {
+        console.log('Rendering coin:', coin.id, 'Active:', coin.isActive, 'Position:', coin.position);
+        return <Coin key={coin.id} coin={coin} />;
+      })}
       
       <ParticleEffect particles={particles} onParticleUpdate={setParticles} />
       
