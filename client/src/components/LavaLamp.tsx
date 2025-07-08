@@ -19,9 +19,8 @@ function Scene() {
   
   const { playBackground, playHit, playSuccess } = useAudioManager();
 
-  // Start spawning coins immediately
+  // Spawn first coin immediately 
   useEffect(() => {
-    console.log('Starting coin spawning system');
     const firstCoin: CoinType = {
       id: 'coin-initial',
       position: { x: 0, y: 8, z: 0 },
@@ -34,8 +33,8 @@ function Scene() {
       age: 0,
     };
     
+    console.log('Creating first coin');
     setCoins([firstCoin]);
-    setLastSpawnTime(Date.now());
   }, []);
 
   // Create platforms in a zigzag pattern
@@ -51,9 +50,9 @@ function Scene() {
   // Import usePhysics hook here inside Scene component
   const { nudgeCoin } = usePhysics(coins, platforms, setCoins);
 
-  // Spawn the first coin immediately on start
+  // Simple continuous spawning system
   useEffect(() => {
-    const spawnCoin = () => {
+    const spawnInterval = setInterval(() => {
       const now = Date.now();
       const newCoin: CoinType = {
         id: `coin-${now}`,
@@ -67,52 +66,13 @@ function Scene() {
         age: 0,
       };
       
-      console.log('About to spawn coin:', newCoin);
-      setCoins(prev => {
-        console.log('Previous coins:', prev);
-        const newCoins = [...prev, newCoin];
-        console.log('New coins array:', newCoins);
-        return newCoins;
-      });
-      setLastSpawnTime(now);
+      console.log('Spawning coin:', newCoin.id);
+      setCoins(prev => [...prev, newCoin]);
       playSuccess();
-    };
+    }, 4000); // Spawn every 4 seconds
 
-    // Spawn first coin after 1 second
-    const firstSpawn = setTimeout(spawnCoin, 1000);
-    
-    return () => clearTimeout(firstSpawn);
+    return () => clearInterval(spawnInterval);
   }, [playSuccess]);
-
-  // Spawn coins periodically after the first one
-  useEffect(() => {
-    if (lastSpawnTime === 0) return; // Wait for first spawn
-    
-    const interval = setInterval(() => {
-      const now = Date.now();
-      if (now - lastSpawnTime > nextSpawnDelay) {
-        const newCoin: CoinType = {
-          id: `coin-${now}`,
-          position: { x: 0, y: 9, z: 0 },
-          velocity: { x: (Math.random() - 0.5) * 0.5, y: 0, z: 0 },
-          rotation: 0,
-          rotationSpeed: 0,
-          scale: 1,
-          opacity: 1,
-          isActive: true,
-          age: 0,
-        };
-        
-        setCoins(prev => [...prev, newCoin]);
-        setLastSpawnTime(now);
-        setNextSpawnDelay(3000 + Math.random() * 2000); // 3-5 seconds for testing
-        console.log('Coin spawned:', newCoin.id);
-        playSuccess();
-      }
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [lastSpawnTime, nextSpawnDelay, playSuccess]);
 
   // Handle touch/click interactions
   const handlePointerDown = useCallback((event: THREE.Event) => {
@@ -184,10 +144,9 @@ function Scene() {
         <Platform key={platform.id} platform={platform} />
       ))}
       
-      {coins.map(coin => {
-        console.log('Rendering coin:', coin.id, 'Active:', coin.isActive, 'Position:', coin.position);
-        return <Coin key={coin.id} coin={coin} />;
-      })}
+      {coins.map(coin => (
+        <Coin key={coin.id} coin={coin} />
+      ))}
       
       <ParticleEffect particles={particles} onParticleUpdate={setParticles} />
       
