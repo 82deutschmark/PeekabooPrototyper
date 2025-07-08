@@ -1,0 +1,35 @@
+## **Prototype Instructions for Development Agent**
+
+### **Core Concept**
+Create a **digital lava lamp experience** - a mesmerizing, continuous physics diorama where circular sprites gently roll down inclined platforms. This is **NOT a game** (no scoring, winning, losing) and **NOT a book** (no story progression). It's a calming, semi-passive experience that toddlers can gently influence through optional touch interaction.
+
+### **Visual Layout & Orientation**
+- **Landscape orientation** (iPhone-style dimensions: ~16:9 aspect ratio)
+- **Donkey Kong-inspired platform layout**: zigzag descent with wooden ramps
+- **Circular billboard sprites** (like coins) that roll down the platforms
+- **Gentle, trackable motion** - slow enough for toddlers to visually follow
+
+### **Physics Behavior**
+- **Reduced gravity** (about 30% of normal) for slow, dreamy movement
+- **Circular sprites bounce and roll** down inclined wooden platforms
+- **Different sprite types** have slightly different physics (some bounce more, some roll differently)
+- **Continuous spawning** - new sprites appear every 8-12 seconds at the top
+- **Bottom collection** - sprites fade away peacefully after reaching the bottom
+
+### **Interaction Model**
+- **Single tap input only** - tap a rolling sprite to give it a gentle nudge
+- **Optional interaction** - the experience continues whether user taps or not
+- **Gentle feedback** - small sparkle effect and soft sound when tapped
+- **No failure states** - impossible to "break" or "lose"
+- **Predictable responses** - taps always produce the same gentle result
+
+### **Atmosphere & Feel**
+- **Soothing color palette** - warm, soft colors that won't overstimulate
+- **Predictable rhythms** - regular spawning creates anticipation and comfort
+- **Gentle audio** - soft background ambience, pleasant sounds on interaction
+- **Visual calm** - smooth movements, no sudden changes or jarring effects
+
+### **Target Experience**
+Think **digital aquarium** or **screensaver with touch** - something a parent would use to occupy a toddler during a restaurant meal or as a pre-naptime wind-down. The child can watch peacefully or gently participate, but never gets frustrated or overwhelmed.
+
+**Key Philosophy**: If a toddler puts the device down and walks away, the experience continues beautifully on its own. If they engage, they feel a gentle sense of influence without any pressure to "perform" or achieve objectives.
