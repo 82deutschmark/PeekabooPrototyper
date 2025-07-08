@@ -30,14 +30,14 @@ function Scene() {
     { id: '5', position: { x: -2, y: -2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['5'] || -0.2 }, width: 3, height: 0.2, depth: 1 },
     { id: '6', position: { x: 2, y: -4, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['6'] || 0.2 }, width: 3, height: 0.2, depth: 1 },
     // Side barriers
-    { id: 'left-wall', position: { x: -6, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, width: 0.5, height: 12, depth: 1 },
-    { id: 'right-wall', position: { x: 6, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, width: 0.5, height: 12, depth: 1 },
+    { id: 'left-wall', position: { x: -5, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['left-wall'] || 0 }, width: 0.5, height: 12, depth: 1 },
+    { id: 'right-wall', position: { x: 5, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['right-wall'] || 0 }, width: 0.5, height: 12, depth: 1 },
   ], [platformRotations]);
 
   // Import usePhysics hook here inside Scene component
   const { nudgeCoin } = usePhysics(coins, platforms, setCoins);
 
-  // Continuous spawning system - spawn every 15 seconds with coin limit
+  // Continuous spawning system - spawn every 3 seconds with coin limit
   useEffect(() => {
     const spawnCoin = () => {
       // Limit to 30 coins maximum
@@ -69,8 +69,8 @@ function Scene() {
     // Spawn first coin immediately
     spawnCoin();
     
-    // Then spawn every 15 seconds
-    const interval = setInterval(spawnCoin, 15000);
+    // Then spawn every 3 seconds
+    const interval = setInterval(spawnCoin, 3000);
     
     return () => clearInterval(interval);
   }, [playSuccess]);
@@ -101,9 +101,14 @@ function Scene() {
         return withinBounds;
       });
 
-      if (clickedPlatform && !clickedPlatform.id.includes('wall')) {
-        // Tilt the platform (but not the side walls)
-        const currentRotation = platformRotations[clickedPlatform.id] || (clickedPlatform.position.x < 0 ? -0.2 : 0.2);
+      if (clickedPlatform) {
+        // Tilt the platform (including side walls)
+        let currentRotation;
+        if (clickedPlatform.id.includes('wall')) {
+          currentRotation = platformRotations[clickedPlatform.id] || 0;
+        } else {
+          currentRotation = platformRotations[clickedPlatform.id] || (clickedPlatform.position.x < 0 ? -0.2 : 0.2);
+        }
         const newRotation = currentRotation > 0 ? currentRotation - 0.3 : currentRotation + 0.3;
         
         setPlatformRotations(prev => ({

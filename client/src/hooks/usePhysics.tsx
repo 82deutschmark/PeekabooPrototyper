@@ -54,19 +54,32 @@ export function usePhysics(coins: Coin[], platforms: Platform[], onCoinUpdate: (
       if (checkCollision(coin, platform)) {
         console.log('Collision with platform:', platform.id);
         
-        // Place coin on top of platform
-        const platformTop = platform.position.y + platform.height / 2;
-        coin.position.y = platformTop + 0.5;
-        
-        // Bounce response
-        coin.velocity.y = -coin.velocity.y * BOUNCE_DAMPING;
-        
-        // Apply platform slope effect for rolling
-        const slopeAngle = platform.rotation.z;
-        coin.velocity.x += Math.sin(slopeAngle) * 3;
-        
-        // Update rotation speed based on velocity (rolling effect)
-        coin.rotationSpeed = coin.velocity.x * 3;
+        // Handle side wall collisions differently
+        if (platform.id.includes('wall')) {
+          // Side wall collision - bounce horizontally
+          if (platform.id === 'left-wall') {
+            coin.position.x = platform.position.x + platform.width / 2 + 0.5;
+            coin.velocity.x = Math.abs(coin.velocity.x) * BOUNCE_DAMPING;
+          } else if (platform.id === 'right-wall') {
+            coin.position.x = platform.position.x - platform.width / 2 - 0.5;
+            coin.velocity.x = -Math.abs(coin.velocity.x) * BOUNCE_DAMPING;
+          }
+        } else {
+          // Regular platform collision
+          // Place coin on top of platform
+          const platformTop = platform.position.y + platform.height / 2;
+          coin.position.y = platformTop + 0.5;
+          
+          // Bounce response
+          coin.velocity.y = -coin.velocity.y * BOUNCE_DAMPING;
+          
+          // Apply platform slope effect for rolling
+          const slopeAngle = platform.rotation.z;
+          coin.velocity.x += Math.sin(slopeAngle) * 3;
+          
+          // Update rotation speed based on velocity (rolling effect)
+          coin.rotationSpeed = coin.velocity.x * 3;
+        }
       }
     });
 
