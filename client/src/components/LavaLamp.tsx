@@ -19,12 +19,13 @@ function Scene() {
   
   const { playBackground, playHit, playSuccess } = useAudioManager();
 
-  // Add test coin for debugging
+  // Start spawning coins immediately
   useEffect(() => {
-    const testCoin: CoinType = {
-      id: 'test-coin-1',
+    console.log('Starting coin spawning system');
+    const firstCoin: CoinType = {
+      id: 'coin-initial',
       position: { x: 0, y: 8, z: 0 },
-      velocity: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0.2, y: 0, z: 0 },
       rotation: 0,
       rotationSpeed: 0,
       scale: 1,
@@ -32,8 +33,9 @@ function Scene() {
       isActive: true,
       age: 0,
     };
-    console.log('Adding test coin:', testCoin);
-    setCoins([testCoin]);
+    
+    setCoins([firstCoin]);
+    setLastSpawnTime(Date.now());
   }, []);
 
   // Create platforms in a zigzag pattern
@@ -103,11 +105,11 @@ function Scene() {
         
         setCoins(prev => [...prev, newCoin]);
         setLastSpawnTime(now);
-        setNextSpawnDelay(8000 + Math.random() * 4000); // 8-12 seconds
+        setNextSpawnDelay(3000 + Math.random() * 2000); // 3-5 seconds for testing
         console.log('Coin spawned:', newCoin.id);
         playSuccess();
       }
-    }, 1000);
+    }, 500);
 
     return () => clearInterval(interval);
   }, [lastSpawnTime, nextSpawnDelay, playSuccess]);

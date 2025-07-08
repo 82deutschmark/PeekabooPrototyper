@@ -18,7 +18,7 @@ export function Coin({ coin }: CoinProps) {
       rotation={[0, coin.rotation, 0]}
       scale={[coin.scale, coin.scale, coin.scale]}
     >
-      <cylinderGeometry args={[0.3, 0.3, 0.2, 32]} />
+      <cylinderGeometry args={[0.5, 0.5, 0.3, 32]} />
       <meshLambertMaterial 
         color="#ffd700" 
         transparent={true}

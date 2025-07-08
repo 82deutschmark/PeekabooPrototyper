@@ -11,7 +11,7 @@ export function usePhysics(coins: Coin[], platforms: Platform[], onCoinUpdate: (
   const deltaTimeRef = useRef(0);
 
   const checkCollision = useCallback((coin: Coin, platform: Platform): boolean => {
-    const coinRadius = 0.3;
+    const coinRadius = 0.5;
     const platformHalfWidth = platform.width / 2;
     const platformHalfHeight = platform.height / 2;
     const platformHalfDepth = platform.depth / 2;
@@ -51,12 +51,20 @@ export function usePhysics(coins: Coin[], platforms: Platform[], onCoinUpdate: (
 
     // Check collisions with platforms
     platforms.forEach(platform => {
+      // Debug platform and coin positions
+      const withinBounds = Math.abs(coin.position.x - platform.position.x) < (platform.width / 2 + 0.5);
+      const nearHeight = Math.abs(coin.position.y - platform.position.y) < 1;
+      
+      if (withinBounds && nearHeight) {
+        console.log('Coin near platform:', platform.id, 'Coin Y:', coin.position.y, 'Platform Y:', platform.position.y);
+      }
+      
       if (checkCollision(coin, platform)) {
         console.log('Collision detected with platform:', platform.id);
         
         // Place coin on top of platform
         const platformTop = platform.position.y + platform.height / 2;
-        coin.position.y = platformTop + 0.3;
+        coin.position.y = platformTop + 0.5;
         
         // Bounce response
         coin.velocity.y = -coin.velocity.y * BOUNCE_DAMPING;
