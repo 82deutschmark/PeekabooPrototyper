@@ -19,6 +19,30 @@ function Scene() {
   const { playBackground, playHit, playSuccess } = useAudioManager();
   const coinCountRef = useRef(0); // Track coin count without re-renders
   const platformsRef = useRef<PlatformType[]>([]); // Reference to current platforms
+  
+  // Beautiful color palette for coins
+  const coinColors = [
+    '#ff6b6b', // Coral red
+    '#4ecdc4', // Turquoise
+    '#45b7d1', // Sky blue
+    '#f9ca24', // Golden yellow
+    '#f0932b', // Orange
+    '#eb4d4b', // Red
+    '#6c5ce7', // Purple
+    '#a29bfe', // Light purple
+    '#fd79a8', // Pink
+    '#00b894', // Green
+    '#00cec9', // Cyan
+    '#fdcb6e', // Light orange
+    '#e17055', // Salmon
+    '#81ecec', // Light cyan
+    '#fab1a0', // Peach
+    '#ff7675', // Light red
+    '#74b9ff', // Light blue
+    '#55a3ff', // Medium blue
+    '#fd79a8', // Rose
+    '#fdcb6e'  // Amber
+  ];
 
   // Create platforms in a zigzag pattern with dynamic rotations and side barriers
   const platforms = useMemo<PlatformType[]>(() => {
@@ -57,6 +81,7 @@ function Scene() {
           opacity: 1,
           isActive: true,
           age: 0,
+          color: coinColors[Math.floor(Math.random() * coinColors.length)],
         };
 
         coinCountRef.current = prev.length + 1;
@@ -144,7 +169,7 @@ function Scene() {
           life: 1,
           maxLife: 0.8 + Math.random() * 0.4,
           size: 0.08 + Math.random() * 0.04,
-          color: '#ffd700'
+          color: clickedCoin.color
         }))
       ]);
 

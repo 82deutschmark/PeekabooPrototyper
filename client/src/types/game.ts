@@ -14,6 +14,7 @@ export interface Coin {
   opacity: number;
   isActive: boolean;
   age: number;
+  color: string;
 }
 
 export interface Platform {

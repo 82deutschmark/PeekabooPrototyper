@@ -20,7 +20,7 @@ export function Coin({ coin }: CoinProps) {
     >
       <cylinderGeometry args={[0.5, 0.5, 0.3, 32]} />
       <meshLambertMaterial 
-        color="#ffd700" 
+        color={coin.color} 
         transparent={true}
         opacity={coin.opacity}
       />
