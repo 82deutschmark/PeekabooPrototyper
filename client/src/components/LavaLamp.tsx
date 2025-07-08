@@ -19,6 +19,23 @@ function Scene() {
   
   const { playBackground, playHit, playSuccess } = useAudioManager();
 
+  // Add test coin for debugging
+  useEffect(() => {
+    const testCoin: CoinType = {
+      id: 'test-coin-1',
+      position: { x: 0, y: 8, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
+      rotation: 0,
+      rotationSpeed: 0,
+      scale: 1,
+      opacity: 1,
+      isActive: true,
+      age: 0,
+    };
+    console.log('Adding test coin:', testCoin);
+    setCoins([testCoin]);
+  }, []);
+
   // Create platforms in a zigzag pattern
   const platforms = useMemo<PlatformType[]>(() => [
     { id: '1', position: { x: -2, y: 6, z: 0 }, rotation: { x: 0, y: 0, z: -0.2 }, width: 3, height: 0.2, depth: 1 },
@@ -48,14 +65,19 @@ function Scene() {
         age: 0,
       };
       
-      setCoins(prev => [...prev, newCoin]);
+      console.log('About to spawn coin:', newCoin);
+      setCoins(prev => {
+        console.log('Previous coins:', prev);
+        const newCoins = [...prev, newCoin];
+        console.log('New coins array:', newCoins);
+        return newCoins;
+      });
       setLastSpawnTime(now);
-      console.log('Coin spawned:', newCoin.id);
       playSuccess();
     };
 
-    // Spawn first coin after 2 seconds
-    const firstSpawn = setTimeout(spawnCoin, 2000);
+    // Spawn first coin after 1 second
+    const firstSpawn = setTimeout(spawnCoin, 1000);
     
     return () => clearTimeout(firstSpawn);
   }, [playSuccess]);
