@@ -19,24 +19,6 @@ function Scene() {
   
   const { playBackground, playHit, playSuccess } = useAudioManager();
 
-  // Spawn first coin immediately 
-  useEffect(() => {
-    const firstCoin: CoinType = {
-      id: 'coin-initial',
-      position: { x: 0, y: 8, z: 0 },
-      velocity: { x: 0.2, y: 0, z: 0 },
-      rotation: 0,
-      rotationSpeed: 0,
-      scale: 1,
-      opacity: 1,
-      isActive: true,
-      age: 0,
-    };
-    
-    console.log('Creating first coin');
-    setCoins([firstCoin]);
-  }, []);
-
   // Create platforms in a zigzag pattern
   const platforms = useMemo<PlatformType[]>(() => [
     { id: '1', position: { x: -2, y: 6, z: 0 }, rotation: { x: 0, y: 0, z: -0.2 }, width: 3, height: 0.2, depth: 1 },
@@ -50,9 +32,9 @@ function Scene() {
   // Import usePhysics hook here inside Scene component
   const { nudgeCoin } = usePhysics(coins, platforms, setCoins);
 
-  // Simple continuous spawning system
+  // Continuous spawning system - spawn every 5 seconds
   useEffect(() => {
-    const spawnInterval = setInterval(() => {
+    const spawnCoin = () => {
       const now = Date.now();
       const newCoin: CoinType = {
         id: `coin-${now}`,
@@ -69,9 +51,15 @@ function Scene() {
       console.log('Spawning coin:', newCoin.id);
       setCoins(prev => [...prev, newCoin]);
       playSuccess();
-    }, 4000); // Spawn every 4 seconds
+    };
 
-    return () => clearInterval(spawnInterval);
+    // Spawn first coin immediately
+    spawnCoin();
+    
+    // Then spawn every 5 seconds
+    const interval = setInterval(spawnCoin, 5000);
+    
+    return () => clearInterval(interval);
   }, [playSuccess]);
 
   // Handle touch/click interactions
@@ -122,11 +110,11 @@ function Scene() {
     }
   }, [coins, nudgeCoin, playHit, playBackground, isFirstInteraction]);
 
-  // Clean up inactive coins
+  // Clean up inactive coins less frequently to avoid interfering with spawning
   useEffect(() => {
     const cleanup = setInterval(() => {
       setCoins(prev => prev.filter(coin => coin.isActive));
-    }, 5000);
+    }, 10000); // Clean up every 10 seconds instead of 5
 
     return () => clearInterval(cleanup);
   }, []);
