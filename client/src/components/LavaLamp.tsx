@@ -20,45 +20,57 @@ function Scene() {
   
   const { playBackground, playHit, playSuccess } = useAudioManager();
 
-  // Create platforms in a zigzag pattern with dynamic rotations
+  // Create platforms in a zigzag pattern with dynamic rotations and side barriers
   const platforms = useMemo<PlatformType[]>(() => [
+    // Main zigzag platforms
     { id: '1', position: { x: -2, y: 6, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['1'] || -0.2 }, width: 3, height: 0.2, depth: 1 },
     { id: '2', position: { x: 2, y: 4, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['2'] || 0.2 }, width: 3, height: 0.2, depth: 1 },
     { id: '3', position: { x: -2, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['3'] || -0.2 }, width: 3, height: 0.2, depth: 1 },
     { id: '4', position: { x: 2, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['4'] || 0.2 }, width: 3, height: 0.2, depth: 1 },
     { id: '5', position: { x: -2, y: -2, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['5'] || -0.2 }, width: 3, height: 0.2, depth: 1 },
     { id: '6', position: { x: 2, y: -4, z: 0 }, rotation: { x: 0, y: 0, z: platformRotations['6'] || 0.2 }, width: 3, height: 0.2, depth: 1 },
+    // Side barriers
+    { id: 'left-wall', position: { x: -6, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, width: 0.5, height: 12, depth: 1 },
+    { id: 'right-wall', position: { x: 6, y: 2, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, width: 0.5, height: 12, depth: 1 },
   ], [platformRotations]);
 
   // Import usePhysics hook here inside Scene component
   const { nudgeCoin } = usePhysics(coins, platforms, setCoins);
 
-  // Continuous spawning system - spawn every 5 seconds
+  // Continuous spawning system - spawn every 15 seconds with coin limit
   useEffect(() => {
     const spawnCoin = () => {
-      const now = Date.now();
-      const newCoin: CoinType = {
-        id: `coin-${now}`,
-        position: { x: 0, y: 9, z: 0 },
-        velocity: { x: (Math.random() - 0.5) * 0.5, y: 0, z: 0 },
-        rotation: 0,
-        rotationSpeed: 0,
-        scale: 1,
-        opacity: 1,
-        isActive: true,
-        age: 0,
-      };
-      
-      console.log('Spawning coin:', newCoin.id);
-      setCoins(prev => [...prev, newCoin]);
-      playSuccess();
+      // Limit to 30 coins maximum
+      setCoins(prev => {
+        if (prev.length >= 30) {
+          console.log('Coin limit reached, skipping spawn');
+          return prev;
+        }
+        
+        const now = Date.now();
+        const newCoin: CoinType = {
+          id: `coin-${now}`,
+          position: { x: 0, y: 9, z: 0 },
+          velocity: { x: (Math.random() - 0.5) * 0.5, y: 0, z: 0 },
+          rotation: 0,
+          rotationSpeed: 0,
+          scale: 1,
+          opacity: 1,
+          isActive: true,
+          age: 0,
+        };
+        
+        console.log('Spawning coin:', newCoin.id, 'Total coins:', prev.length + 1);
+        playSuccess();
+        return [...prev, newCoin];
+      });
     };
 
     // Spawn first coin immediately
     spawnCoin();
     
-    // Then spawn every 8 seconds
-    const interval = setInterval(spawnCoin, 8000);
+    // Then spawn every 15 seconds
+    const interval = setInterval(spawnCoin, 15000);
     
     return () => clearInterval(interval);
   }, [playSuccess]);
@@ -89,8 +101,8 @@ function Scene() {
         return withinBounds;
       });
 
-      if (clickedPlatform) {
-        // Tilt the platform
+      if (clickedPlatform && !clickedPlatform.id.includes('wall')) {
+        // Tilt the platform (but not the side walls)
         const currentRotation = platformRotations[clickedPlatform.id] || (clickedPlatform.position.x < 0 ? -0.2 : 0.2);
         const newRotation = currentRotation > 0 ? currentRotation - 0.3 : currentRotation + 0.3;
         
