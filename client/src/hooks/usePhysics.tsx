@@ -16,11 +16,21 @@ export function usePhysics(coins: Coin[], platforms: Platform[], onCoinUpdate: (
     const platformHalfHeight = platform.height / 2;
     const platformHalfDepth = platform.depth / 2;
 
-    // Check if coin is above the platform (within X and Z bounds)
     const distanceX = Math.abs(coin.position.x - platform.position.x);
+    const distanceY = Math.abs(coin.position.y - platform.position.y);
     const distanceZ = Math.abs(coin.position.z - platform.position.z);
     
-    // Check if coin is within platform bounds horizontally
+    // Special collision detection for side walls
+    if (platform.id.includes('wall')) {
+      // Wall collision: check if coin is hitting the wall from the side
+      const withinWallHeight = distanceY < (platformHalfHeight + coinRadius);
+      const withinWallDepth = distanceZ < (platformHalfDepth + coinRadius);
+      const hitWallSide = distanceX < (platformHalfWidth + coinRadius);
+      
+      return withinWallHeight && withinWallDepth && hitWallSide;
+    }
+    
+    // Regular platform collision detection
     const withinPlatformBounds = (
       distanceX < (platformHalfWidth + coinRadius) &&
       distanceZ < (platformHalfDepth + coinRadius)
@@ -29,7 +39,6 @@ export function usePhysics(coins: Coin[], platforms: Platform[], onCoinUpdate: (
     // Check if coin is at the right height to land on platform
     const platformTop = platform.position.y + platformHalfHeight;
     const coinBottom = coin.position.y - coinRadius;
-    const coinAbovePlatform = coin.position.y > platformTop;
     const coinNearPlatform = Math.abs(coinBottom - platformTop) < 0.5;
     
     return withinPlatformBounds && coinNearPlatform && coin.velocity.y <= 0;
