@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
 import { Coin } from './Coin';
 import { ParticleEffect } from './ParticleEffect';
+import { Barn } from './Barn';
 import { useGaltonPhysics } from '../hooks/useGaltonPhysics';
 import { useAudioManager } from '../hooks/useAudioManager';
 import { Coin as CoinType, Peg, Bin, ParticleData } from '../types/game';
@@ -13,7 +14,7 @@ const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 15;
 const PEG_ROWS = 10;
 const PEG_COLS = 7;
-const PEG_SPACING = 1.2;
+const PEG_SPACING = 1.6;
 const BIN_COUNT = 9;
 const COIN_RADIUS = 0.4;
 const PEG_RADIUS = 0.15;
@@ -46,8 +47,8 @@ function GaltonScene() {
       const pegsInRow = row % 2 === 0 ? PEG_COLS : PEG_COLS - 1;
 
       for (let col = 0; col < pegsInRow; col++) {
-        const x = -BOARD_WIDTH/2 + rowOffset + col * PEG_SPACING;
-        const y = BOARD_HEIGHT/2 - row * PEG_SPACING;
+        const x = -BOARD_WIDTH/2 + rowOffset + col * PEG_SPACING + 1.2;
+        const y = BOARD_HEIGHT/2 - row * PEG_SPACING - 2;
 
         pegsArray.push({
           id: `peg-${row}-${col}`,
@@ -109,8 +110,8 @@ function GaltonScene() {
       const newCoin: CoinType = {
         id: `coin-${Date.now()}`,
         position: { 
-          x: (Math.random() - 0.5) * 2, // Narrower spawn area
-          y: BOARD_HEIGHT/2 - 1,
+          x: (Math.random() - 0.5) * 0.8, // Spawn from barn area
+          y: BOARD_HEIGHT/2 + 1, // Spawn above barn
           z: 0 
         },
         velocity: { x: (Math.random() - 0.5) * 0.02, y: -0.002, z: 0 }, // Very slow initial velocity
@@ -201,6 +202,11 @@ function GaltonScene() {
       <ambientLight intensity={0.6} />
       <directionalLight position={[10, 10, 5]} intensity={0.8} />
       <pointLight position={[0, 10, 2]} intensity={0.5} />
+
+      {/* Barn for spawning coins */}
+      <group position={[0, BOARD_HEIGHT/2 + 2, 0]}>
+        <Barn />
+      </group>
 
       {/* Wooden pegs with warm colors */}
       {pegs.map(peg => (
