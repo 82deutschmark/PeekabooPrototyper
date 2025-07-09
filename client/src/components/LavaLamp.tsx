@@ -1,4 +1,4 @@
-import { Canvas } from '@react-three/fiber';
+import { Canvas, ThreeEvent } from '@react-three/fiber';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Barn } from './Barn';
@@ -109,7 +109,7 @@ function Scene() {
   }, []);
 
   // Handle interactions
-  const handlePointerDown = useCallback((event: THREE.Event) => {
+  const handlePointerDown = useCallback((event: ThreeEvent) => {
     if (isFirstInteraction) {
       playBackground();
       setIsFirstInteraction(false);
@@ -175,7 +175,7 @@ function Scene() {
 
       playHit();
     }
-  }, [coins, nudgeCoin, playHit, playBackground, isFirstInteraction]);
+  }, [coins, nudgeCoin, playHit, playBackground, isFirstInteraction, platformRotations]);
 
   return (
     <>

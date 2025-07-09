@@ -1,18 +1,31 @@
 // src/hooks/useGaltonPhysics.ts
 import { useState, useEffect } from 'react';
-import { Coin as CoinType, Peg, Bin } from '../types/game';
+// Gemini-2.5-Pro: I'm adding ParticleData to create effects when a coin is binned.
+import { Coin as CoinType, Peg, Bin, ParticleData } from '../types/game';
 
-const GRAVITY = 0.0001; // Even slower gravity
-const FRICTION = 0.996; // Slightly less friction for smoother movement
+// Gemini-2.5-Pro: I've reduced gravity significantly for a calmer, slower fall.
+const GRAVITY = 0.00008; 
+const FRICTION = 0.997; 
 const COIN_RADIUS = 0.3;
 const PEG_RADIUS = 0.15;
+// Gemini-2.5-Pro: I've added a type for the bin dividers we'll create.
+type Divider = {
+  position: { x: number; y: number };
+  width: number;
+  height: number;
+};
 
 export function useGaltonPhysics(
   pegs: Peg[],
   bins: Bin[],
+  // Gemini-2.5-Pro: We now accept dividers for collision detection.
+  dividers: Divider[],
   setCoins: React.Dispatch<React.SetStateAction<CoinType[]>>,
   setBins: React.Dispatch<React.SetStateAction<Bin[]>>,
-  setScore: React.Dispatch<React.SetStateAction<number>>
+  setScore: React.Dispatch<React.SetStateAction<number>>,
+  // Gemini-2.5-Pro: We need these to create particles and play sounds on success.
+  setParticles: React.Dispatch<React.SetStateAction<ParticleData[]>>,
+  playSuccess: () => void
 ) {
   const updatePhysics = () => {
     setCoins(prevCoins => {
@@ -35,10 +48,21 @@ export function useGaltonPhysics(
         
         // Boundary collision (left/right walls)
         if (Math.abs(newX) > 4.8) {
-          newVx *= -0.8; // Bounce with energy loss
-          newX = coin.position.x; // Prevent moving through wall
+          newVx *= -0.8;
+          newX = coin.position.x; 
         }
         
+        // Gemini-2.5-Pro: New collision logic for the bin dividers.
+        // This keeps coins from passing through the bin walls.
+        for (const divider of dividers) {
+          const dx = newX - divider.position.x;
+          // Check if the coin is within the horizontal and vertical bounds of the divider.
+          if (Math.abs(dx) < (COIN_RADIUS + divider.width / 2) && newY < divider.position.y + divider.height / 2) {
+            newVx *= -0.6; // Bounce off the divider
+            newX = coin.position.x + newVx; // Apply bounce immediately
+          }
+        }
+
         // Peg collisions
         for (const peg of pegs) {
           const dx = newX - peg.position.x;
@@ -78,6 +102,31 @@ export function useGaltonPhysics(
               // Score points based on bin position
               const binScore = 10 + Math.floor(Math.random() * 20);
               scoreIncrement += binScore;
+
+              // Gemini-2.5-Pro: Play a success sound!
+              playSuccess();
+
+              // Gemini-2.5-Pro: Create a burst of particles on collection.
+              setParticles(prev => [
+                ...prev,
+                ...Array.from({ length: 12 }, (_, i) => ({
+                  id: `particle-${Date.now()}-${i}`,
+                  position: { 
+                    x: newX,
+                    y: newY,
+                    z: 0
+                  },
+                  velocity: {
+                    x: (Math.random() - 0.5) * 2,
+                    y: Math.random() * 2,
+                    z: 0
+                  },
+                  life: 1,
+                  maxLife: 0.6 + Math.random() * 0.4,
+                  size: 0.07 + Math.random() * 0.03,
+                  color: coin.color
+                }))
+              ]);
               
               // Mark coin as inactive
               nextCoins[i] = { ...coin, isActive: false };

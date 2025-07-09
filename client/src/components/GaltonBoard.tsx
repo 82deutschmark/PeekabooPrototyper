@@ -1,7 +1,8 @@
 // GaltonBoard.tsx
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { Canvas } from '@react-three/fiber';
+// Gemini-2.5-Pro: I'm importing ThreeEvent to fix the click handler type.
+import { Canvas, ThreeEvent } from '@react-three/fiber';
 import { Coin } from './Coin';
 import { ParticleEffect } from './ParticleEffect';
 import { Barn } from './Barn';
@@ -26,6 +27,8 @@ function GaltonScene() {
   const [particles, setParticles] = useState<ParticleData[]>([]);
   const [score, setScore] = useState(0);
   const [isFirstInteraction, setIsFirstInteraction] = useState(true);
+  // Gemini-2.5-Pro: This new state will help us animate the score.
+  const [scoreJustUpdated, setScoreJustUpdated] = useState(false);
   const coinCountRef = useRef(0);
   const coinsRef = useRef(coins);
   coinsRef.current = coins;
@@ -60,6 +63,27 @@ function GaltonScene() {
     return pegsArray;
   }, []);
 
+  // Gemini-2.5-Pro: I'm creating the vertical dividers for the bins.
+  const binDividers = useMemo(() => {
+    const dividers = [];
+    const binWidth = BOARD_WIDTH / BIN_COUNT;
+    const dividerHeight = 4; // Make them tall enough.
+    const dividerY = -BOARD_HEIGHT / 2 + dividerHeight / 2 - 0.5;
+
+    for (let i = 0; i <= BIN_COUNT; i++) {
+      dividers.push({
+        id: `divider-${i}`,
+        position: {
+          x: -BOARD_WIDTH / 2 + i * binWidth,
+          y: dividerY,
+        },
+        width: 0.1,
+        height: dividerHeight,
+      });
+    }
+    return dividers;
+  }, []);
+
   // Generate bins at the bottom
   useEffect(() => {
     const binWidth = BOARD_WIDTH / BIN_COUNT;
@@ -84,7 +108,8 @@ function GaltonScene() {
   }, []);
 
   // Physics hook for the Galton board
-  const { updatePhysics } = useGaltonPhysics(pegs, bins, setCoins, setBins, setScore);
+  // Gemini-2.5-Pro: I'm passing the new dividers, particle setter, and sound player to the hook.
+  const { updatePhysics } = useGaltonPhysics(pegs, bins, binDividers, setCoins, setBins, setScore, setParticles, playSuccess);
 
   // Physics update loop
   useEffect(() => {
@@ -114,7 +139,8 @@ function GaltonScene() {
           y: BOARD_HEIGHT/2 + 1, // Spawn above barn
           z: 0 
         },
-        velocity: { x: (Math.random() - 0.5) * 0.02, y: -0.002, z: 0 }, // Very slow initial velocity
+        // Gemini-2.5-Pro: A gentler drop. Changed y-velocity from -0.002 to 0.
+        velocity: { x: (Math.random() - 0.5) * 0.02, y: 0, z: 0 },
         rotation: 0,
         rotationSpeed: 0.01 + Math.random() * 0.02, // Slower rotation
         scale: 0.8,
@@ -149,8 +175,18 @@ function GaltonScene() {
     return () => clearInterval(cleanup);
   }, []);
 
+  // Gemini-2.5-Pro: This effect will animate the score when it changes.
+  useEffect(() => {
+    if (score > 0) {
+      setScoreJustUpdated(true);
+      const timer = setTimeout(() => setScoreJustUpdated(false), 300); // Animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [score]);
+
   // Handle interactions - matching lava lamp style
-  const handlePointerDown = useCallback((event: THREE.Event) => {
+  // Gemini-2.5-Pro: I've fixed the event type here from THREE.Event to the correct ThreeEvent.
+  const handlePointerDown = useCallback((event: ThreeEvent) => {
     if (isFirstInteraction) {
       playBackground();
       setIsFirstInteraction(false);
@@ -198,6 +234,26 @@ function GaltonScene() {
 
   return (
     <>
+      {/* Gemini-2.5-Pro: I'm adding a score display overlay. */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        color: 'white',
+        fontSize: '2.5em',
+        fontWeight: 'bold',
+        textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+        zIndex: 100,
+        transition: 'transform 0.2s ease-out, color 0.2s',
+        ...(scoreJustUpdated && { 
+          transform: 'translateX(-50%) scale(1.2)',
+          color: '#f9ca24'
+        })
+      }}>
+        Score: {score}
+      </div>
+
       {/* Lighting matching lava lamp */}
       <ambientLight intensity={0.6} />
       <directionalLight position={[10, 10, 5]} intensity={0.8} />
@@ -215,6 +271,17 @@ function GaltonScene() {
           position={[peg.position.x, peg.position.y, 0]}
         >
           <cylinderGeometry args={[peg.radius, peg.radius, 0.5, 16]} />
+          <meshLambertMaterial color="#8B4513" />
+        </mesh>
+      ))}
+
+      {/* Gemini-2.5-Pro: Rendering the new bin dividers. */}
+      {binDividers.map(divider => (
+        <mesh
+          key={divider.id}
+          position={[divider.position.x, divider.position.y, 0]}
+        >
+          <boxGeometry args={[divider.width, divider.height, 1]} />
           <meshLambertMaterial color="#8B4513" />
         </mesh>
       ))}
