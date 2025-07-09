@@ -36,7 +36,7 @@ function GaltonScene() {
         const y = BOARD_HEIGHT/2 - row * PEG_SPACING;
 
         pegsArray.push({
-          id: peg-${row}-${col},
+          id: `peg-${row}-${col}`,
           position: { x, y, z: 0 },
           radius: PEG_RADIUS
         });
@@ -52,7 +52,7 @@ function GaltonScene() {
 
     for (let i = 0; i < BIN_COUNT; i++) {
       newBins.push({
-        id: bin-${i},
+        id: `bin-${i}`,
         position: { 
           x: -BOARD_WIDTH/2 + i * binWidth + binWidth/2,
           y: -BOARD_HEIGHT/2 + 0.5,
@@ -93,7 +93,7 @@ function GaltonScene() {
       if (prev.length >= 20) return prev;
 
       const newCoin: CoinType = {
-        id: coin-${Date.now()},
+        id: `coin-${Date.now()}`,
         position: { 
           x: (Math.random() - 0.5) * BOARD_WIDTH * 0.8,
           y: BOARD_HEIGHT/2 - 1,
@@ -106,6 +106,7 @@ function GaltonScene() {
         opacity: 1,
         isActive: true,
         age: 0,
+        color: '#ffd700',
       };
 
       return [...prev, newCoin];
@@ -176,9 +177,9 @@ function GaltonScene() {
         <Coin key={coin.id} coin={coin} />
       ))}
 
-      {/* Score display */}
+      {/* Score display - simplified to avoid font issues */}
       <mesh position={[0, BOARD_HEIGHT/2 + 1, 0]}>
-        <textGeometry args={[Score: ${score}, { font: new THREE.Font(), size: 0.5, height: 0.1 }]} />
+        <boxGeometry args={[2, 0.8, 0.2]} />
         <meshStandardMaterial color="#f1c40f" />
       </mesh>
 

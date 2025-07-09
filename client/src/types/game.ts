@@ -35,3 +35,18 @@ export interface ParticleData {
   size: number;
   color: string;
 }
+
+export interface Peg {
+  id: string;
+  position: Vector3;
+  radius: number;
+}
+
+export interface Bin {
+  id: string;
+  position: Vector3;
+  width: number;
+  height: number;
+  depth: number;
+  count: number;
+}
