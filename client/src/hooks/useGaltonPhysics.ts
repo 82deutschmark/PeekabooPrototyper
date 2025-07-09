@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Coin as CoinType, Peg, Bin } from '../types/game';
 
-const GRAVITY = 0.0002; // Much slower gravity
+const GRAVITY = 0.0001; // Even slower gravity
 const FRICTION = 0.996; // Slightly less friction for smoother movement
 const COIN_RADIUS = 0.4;
 const PEG_RADIUS = 0.15;

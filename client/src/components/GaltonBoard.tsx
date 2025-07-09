@@ -104,7 +104,7 @@ function GaltonScene() {
   // Spawn coins at the top
   const spawnCoin = useCallback(() => {
     setCoins(prev => {
-      if (coinCountRef.current >= 30) return prev;
+      if (coinCountRef.current >= 10) return prev;
 
       const newCoin: CoinType = {
         id: `coin-${Date.now()}`,
@@ -129,10 +129,10 @@ function GaltonScene() {
     });
   }, [coinColors, playSuccess]);
 
-  // Auto-spawn coins periodically - matching lava lamp timing
+  // Auto-spawn coins periodically - slower than lava lamp
   useEffect(() => {
     spawnCoin(); // Initial coin
-    const interval = setInterval(spawnCoin, 3000); // Match lava lamp timing
+    const interval = setInterval(spawnCoin, 8000); // Much slower spawning
     return () => clearInterval(interval);
   }, [spawnCoin]);
 
