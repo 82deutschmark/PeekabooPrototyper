@@ -109,10 +109,11 @@ function Scene() {
   }, []);
 
   // Handle interactions
-  const handlePointerDown = useCallback((event: ThreeEvent) => {
+  const handlePointerDown = useCallback((event: ThreeEvent<PointerEvent>) => {
+    // Check if this is the first interaction
     if (isFirstInteraction) {
-      playBackground();
-      setIsFirstInteraction(false);
+      playBackground(); // Start playing background music
+      setIsFirstInteraction(false); // Mark that the first interaction has occurred
     }
 
     const intersection = event.intersections[0];
