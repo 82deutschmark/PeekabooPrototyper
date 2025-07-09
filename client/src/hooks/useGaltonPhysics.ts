@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { Coin as CoinType, Peg, Bin } from '../types/game';
 
-const GRAVITY = 0.005;
-const FRICTION = 0.98;
+const GRAVITY = 0.0002; // Much slower gravity
+const FRICTION = 0.996; // Slightly less friction for smoother movement
 const COIN_RADIUS = 0.4;
 const PEG_RADIUS = 0.15;
 
@@ -66,8 +66,8 @@ export function useGaltonPhysics(
           }
         }
         
-        // Bin collection
-        if (newY < -7) {
+        // Bin collection - check when coin reaches bin level
+        if (newY <= -6) {
           for (const bin of bins) {
             if (Math.abs(newX - bin.position.x) < bin.width / 2) {
               // Add to bin
@@ -83,6 +83,11 @@ export function useGaltonPhysics(
               nextCoins[i] = { ...coin, isActive: false };
               break;
             }
+          }
+          
+          // If no bin caught it, deactivate anyway to prevent endless falling
+          if (coin.isActive) {
+            nextCoins[i] = { ...coin, isActive: false };
           }
         }
         
