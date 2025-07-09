@@ -14,9 +14,9 @@ const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 15;
 const PEG_ROWS = 10;
 const PEG_COLS = 7;
-const PEG_SPACING = 1.6;
+const PEG_SPACING = 1.2;
 const BIN_COUNT = 9;
-const COIN_RADIUS = 0.4;
+const COIN_RADIUS = 0.3;
 const PEG_RADIUS = 0.15;
 
 // Scene component for the Galton board
@@ -47,8 +47,8 @@ function GaltonScene() {
       const pegsInRow = row % 2 === 0 ? PEG_COLS : PEG_COLS - 1;
 
       for (let col = 0; col < pegsInRow; col++) {
-        const x = -BOARD_WIDTH/2 + rowOffset + col * PEG_SPACING + 1.2;
-        const y = BOARD_HEIGHT/2 - row * PEG_SPACING - 2;
+        const x = -BOARD_WIDTH/2 + rowOffset + col * PEG_SPACING;
+        const y = BOARD_HEIGHT/2 - row * PEG_SPACING;
 
         pegsArray.push({
           id: `peg-${row}-${col}`,
@@ -117,7 +117,7 @@ function GaltonScene() {
         velocity: { x: (Math.random() - 0.5) * 0.02, y: -0.002, z: 0 }, // Very slow initial velocity
         rotation: 0,
         rotationSpeed: 0.01 + Math.random() * 0.02, // Slower rotation
-        scale: 1,
+        scale: 0.8,
         opacity: 1,
         isActive: true,
         age: 0,
